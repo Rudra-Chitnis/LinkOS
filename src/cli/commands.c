@@ -42,6 +42,26 @@ static int run_doctor(void)
     return 0;
 }
 
+static int run_start(void)
+{
+    if (linkos_platform_runtime_start() != 0) {
+        fputs("Could not install the shutdown handler.\n", stderr);
+        return 1;
+    }
+
+    puts("LinkOS is running in the foreground. Press Ctrl+C to stop.");
+    puts("Networking is not implemented; no listener has been started.");
+    (void)fflush(stdout);
+    linkos_log(LINKOS_LOG_INFO, "Foreground runtime started.");
+    while (!linkos_platform_shutdown_requested()) {
+        linkos_platform_sleep_ms(250UL);
+    }
+    linkos_log(LINKOS_LOG_INFO, "Foreground runtime stopped.");
+    puts("LinkOS stopped.");
+    linkos_platform_runtime_stop();
+    return 0;
+}
+
 int linkos_run_command(int argc, char **argv)
 {
     if (argc < 2 || strcmp(argv[1], "help") == 0 ||
@@ -60,9 +80,7 @@ int linkos_run_command(int argc, char **argv)
     }
 
     if (strcmp(argv[1], "start") == 0) {
-        puts("LinkOS foreground runtime is not implemented in this milestone.");
-        puts("No network listener has been started.");
-        return 2;
+        return run_start();
     }
 
     fprintf(stderr, "Unknown command: %s\n\n", argv[1]);
